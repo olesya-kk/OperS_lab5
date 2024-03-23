@@ -12,84 +12,72 @@ using System.Windows.Forms;
 
 namespace OperS_lab5
 {
-    public partial class Form1 : Form
+   public partial class Form1 : Form
+{
+    private SecondThreadClass secondThread;
+    private Thread additionalThread;
+    public Form1()
     {
-        private SecondThreadClass secondThread;
-        private Thread mainThread;
+        InitializeComponent();
+        secondThread = new SecondThreadClass();
+        secondThread.UpdateUI += HandleUpdateUI;
+    }
 
-        public Form1()
+    private void Form1_Load(object sender, EventArgs e)
+    {
+        StartMainWork();
+    }
+    private void HandleUpdateUI(object sender, string message)
+    {
+        if (InvokeRequired)
         {
-            InitializeComponent();
-
-            secondThread = new SecondThreadClass();
-            secondThread.UpdateUI += HandleUpdateUI;
-
+            Invoke(new Action(() => listBox1.Items.Add(message)));
         }
-
-        private void Form1_Load(object sender, EventArgs e)
+        else
         {
-            secondThread.StartThread();
-            StartMainWork(); // Запускаем работу в основном потоке
-        }
-
-        private void HandleUpdateUI(object sender, string message)
-        {
-            if (InvokeRequired)
-            {
-                Invoke(new Action(() => richTextBox1.AppendText(message + Environment.NewLine)));
-            }
-            else
-            {
-                richTextBox1.AppendText(message + Environment.NewLine);
-            }
-        }
-        private void StartMainWork()
-        {
-            mainThread = new Thread(() =>
-            {
-                while (true)
-                {
-                    this.Invoke(new Action(() =>
-                    {
-                        Text = $"Основной поток: {DateTime.Now}";
-                    }));
-                    Thread.Sleep(1000); // Имитация работы, пауза 1 секунда
-                }
-            })
-            { IsBackground = true };
-            mainThread.Start();
-        }
-
-        private void increasePriorityButton_Click_1(object sender, EventArgs e)
-        {
-            if (secondThread != null)
-            {
-                secondThread.IncreasePriority();
-            }
-        }
-
-        private void decreasePriorityButton_Click_1(object sender, EventArgs e)
-        {
-            if (secondThread != null)
-            {
-                secondThread.DecreasePriority();
-            }
-        }
-
-        private void stopThreadButton_Click_1(object sender, EventArgs e)
-        {
-            if (mainThread != null)
-            {
-                mainThread.Abort();
-            }
-        }
-
-        private void createThreadButton_Click_1(object sender, EventArgs e)
-        {
-            mainThread = new Thread(StartMainWork)
-            { IsBackground = true };
-            mainThread.Start();
+            listBox1.Items.Add(message);
         }
     }
+
+    private void StartMainWork()
+    {
+        additionalThread = new Thread(() =>
+        {
+            while (true)
+            {
+                this.Invoke(new Action(() =>
+                {
+                    Text = $"Основной поток: {DateTime.Now}";
+                }));
+                Thread.Sleep(1000);
+            }
+        });
+        additionalThread.IsBackground = true;
+        additionalThread.Start();
+    }
+    private void button1_Click(object sender, EventArgs e)
+    {
+        secondThread.CreateThread();
+    }
+    private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
+    {
+
+    }
+
+    private void button2_Click(object sender, EventArgs e)
+    {
+        secondThread.StartThread();
+    }
+
+    private void button3_Click(object sender, EventArgs e)
+    {
+        if (radioButton1.Checked)
+            secondThread.SetPriority(ThreadPriority.Lowest);
+        else if (radioButton2.Checked)
+            secondThread.SetPriority(ThreadPriority.Normal);
+        else if (radioButton3.Checked)
+            secondThread.SetPriority(ThreadPriority.Highest);
+    }
+}
 
 }
