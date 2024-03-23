@@ -7,49 +7,43 @@ using System.Threading.Tasks;
 
 namespace OperS_lab5
 {
-    public class SecondThreadClass
+    internal class SecondThreadClass
+{
+    public event EventHandler<string> UpdateUI;
+
+    private bool stopThread;
+    private Thread thread;
+
+    public void CreateThread()
     {
-        public event EventHandler<string> UpdateUI;
+        thread = new Thread(SecondThreadMethod);
+    }
 
-        private bool stopThread;
-        private Thread secondThread;
-
-        public void StartThread()
-        {
-            Thread thread = new Thread(SecondThreadMethod);
+    public void StartThread()
+    {
+        if (thread != null)
             thread.Start();
-        }
+    }
 
-        private void SecondThreadMethod()
-        {
-            while (!stopThread)
-            {
-                Thread.Sleep(1000);
-                OnUpdateUI("Дополнительный поток выполняет действие");
-            }
-        }
+    public void SetPriority(ThreadPriority priority)
+    {
+        if (thread != null)
+            thread.Priority = priority;
+    }
 
-        protected virtual void OnUpdateUI(string message)
+    private void SecondThreadMethod()
+    {
+        while (!stopThread)
         {
-            UpdateUI?.Invoke(this, message);
-        }
-        public void IncreasePriority()
-        {
-            if (secondThread != null &&
-                secondThread.Priority < ThreadPriority.Highest)
-            {
-                secondThread.Priority++;
-            }
-        }
-
-        public void DecreasePriority()
-        {
-            if (secondThread != null &&
-                secondThread.Priority > ThreadPriority.Lowest)
-            {
-                secondThread.Priority--;
-            }
+            Thread.Sleep(1000);
+            OnUpdateUI("Дополнительный поток выполняет действие");
         }
     }
+
+    protected virtual void OnUpdateUI(string message)
+    {
+        UpdateUI?.Invoke(this, message);
+    }
+}
 
 }
